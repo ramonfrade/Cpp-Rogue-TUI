@@ -9,3 +9,4 @@ int main()
 	endwin();			/* End curses mode		  */
 
 	return 0;
+}
