@@ -2,3 +2,4 @@
 build/
 *.o
 .clang-format
+test.cpp
