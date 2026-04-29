@@ -1,10 +1,20 @@
 #include <ncurses.h>
 
+#include <string>
+#include <vector>
+
 class Game {
    private:
     int playerY = 0;
     int playerX = 0;
     bool isRunning;
+    std::vector<std::string> map = {
+        "######################", "#....................#",
+        "#....................#", "#....................#",
+        "#....................#", "#....................#",
+        "#....................#", "#....................#",
+        "#....................#", "#....................#",
+        "######################"};
 
     void initNcurses() {
         initscr();
@@ -18,55 +28,58 @@ class Game {
     Game()  // Constructing the game, just starting the map in the terminal
     {
         initNcurses();
-        getmaxyx(stdscr, playerY, playerX);  // getting size of the screen
-
-        // positioning the player in the middle of the screen
-        playerX = playerX / 2;
-        playerY = playerY / 2;
-
+        playerY = map.size() / 2;
+        playerX = map[0].size() / 2;
         isRunning = true;
     }
     ~Game() { endwin(); }
 
     void draw() {
         clear();  // clearing player's previous trail
-
-        mvprintw(0, 0, "Use W, A, S, D or Arrows to move. Press 'Q' to quit.");
-        mvprintw(26, 0, "Debug: Current Player Position (X: %d, Y: %d)",
-                 playerX, playerY);
-
+        for (int y = 0; y < map.size(); y++) {
+            for (int x = 0; x < map[y].size(); x++) {
+                mvaddch(y, x, map[y][x]);
+            }
+        }
         mvaddch(playerY, playerX, '@');  // positioning the player
         refresh();
     }
 
     void handleInput() {
         int key = getch();
+        int nextY = playerY;
+        int nextX = playerX;
 
         switch (key) {
             case 'w':
             case 'W':
             case KEY_UP:
-                --playerY;
+                nextY--;
                 break;
             case 's':
             case 'S':
             case KEY_DOWN:
-                ++playerY;
+                nextY++;
                 break;
             case 'a':
             case 'A':
             case KEY_LEFT:
-                --playerX;
+                nextX--;
                 break;
             case 'd':
             case 'D':
             case KEY_RIGHT:
-                ++playerX;
+                nextX++;
                 break;
             case 'q':
             case 'Q':
                 isRunning = false;
                 break;
+        }
+
+        if (map[nextY][nextX] != '#') {
+            playerX = nextX;
+            playerY = nextY;
         }
     }
 
