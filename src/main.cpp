@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <sys/types.h>
 
 #include <string>
 #include <vector>
@@ -9,12 +10,12 @@ class Game {
     int playerX = 0;
     bool isRunning;
     std::vector<std::string> map = {
-        "######################", "#....................#",
-        "#....................#", "#....................#",
-        "#....................#", "#....................#",
-        "#....................#", "#....................#",
-        "#....................#", "#....................#",
-        "######################"};
+        "#######################", "#..........#..........#",
+        "#..........#..........#", "#..........#..........#",
+        "#..........#..........#", "#..........+..........#",
+        "#..........#..........#", "#..........#..........#",
+        "#..........#..........#", "#..........#..........#",
+        "#######################"};
 
     void initNcurses() {
         initscr();
@@ -28,8 +29,8 @@ class Game {
     Game()  // Constructing the game, just starting the map in the terminal
     {
         initNcurses();
-        playerY = map.size() / 2;
-        playerX = map[0].size() / 2;
+        playerY = 1;
+        playerX = 1;
         isRunning = true;
     }
     ~Game() { endwin(); }
@@ -78,8 +79,12 @@ class Game {
         }
 
         if (map[nextY][nextX] != '#') {
-            playerX = nextX;
-            playerY = nextY;
+            if (map[nextY][nextX] == '+') {
+                map[nextY][nextX] = '/';
+            } else {
+                playerX = nextX;
+                playerY = nextY;
+            }
         }
     }
 
