@@ -1,5 +1,6 @@
 #include <ncurses.h>
 
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -8,13 +9,7 @@ class Game {
     int playerY = 0;
     int playerX = 0;
     bool isRunning;
-    std::vector<std::string> map = {
-        "#######################", "#..........#..........#",
-        "#..........#..........#", "#..........#..........#",
-        "#..........#..........#", "#..........+..........#",
-        "#..........#..........#", "#..........#..........#",
-        "#..........#..........#", "#..........#..........#",
-        "#######################"};
+    std::vector<std::string> map;
 
     void initNcurses() {
         initscr();
@@ -28,11 +23,38 @@ class Game {
     Game()  // Constructing the game, just starting the map in the terminal
     {
         initNcurses();
+        loadMap();
         playerY = 1;
         playerX = 1;
         isRunning = true;
     }
     ~Game() { endwin(); }
+
+    void loadMap() {
+        std::ifstream file("../map.txt");
+
+        std::string line;
+
+        if (file.is_open()) {
+            while (std::getline(file, line)) {
+                map.push_back(line);
+            }
+
+            file.close();
+
+        } else {
+            // If the file cannot be opened, display an error message and exit
+            printw("Unable to open map file!");
+
+            refresh();
+
+            getch();
+
+            endwin();
+
+            exit(1);
+        }
+    }
 
     void draw() {
         clear();  // clearing player's previous trail
