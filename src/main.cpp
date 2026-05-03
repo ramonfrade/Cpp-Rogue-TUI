@@ -24,8 +24,7 @@ class Game {
     {
         initNcurses();
         loadMap();
-        playerY = 1;
-        playerX = 1;
+        loadPlayer();
         isRunning = true;
     }
     ~Game() { endwin(); }
@@ -45,14 +44,43 @@ class Game {
         } else {
             // If the file cannot be opened, display an error message and exit
             printw("Unable to open map file!");
-
             refresh();
-
             getch();
-
             endwin();
-
             exit(1);
+        }
+    }
+
+    void loadPlayer() {
+        std::ifstream file("../player.txt");
+
+        if (file.is_open()) {
+            file >> playerY >> playerX;
+            file.close();
+        } else {
+            playerY = 1;
+            playerX = 1;
+        }
+    }
+
+    // Saving the map and player position to a file, so that it can be loaded
+    // again when the game is restarted
+    void saveMao() {
+        std::ofstream file("../map.txt");
+
+        if (file.is_open()) {
+            for (int i = 0; i < map.size(); i++) {
+                file << map[i] << '\n';
+            }
+            file.close();
+        }
+    }
+
+    void savePlayer() {
+        std::ofstream file("../player.txt");
+        if (file.is_open()) {
+            file << playerY << '\n' << playerX << '\n';
+            file.close();
         }
     }
 
@@ -92,6 +120,11 @@ class Game {
             case 'D':
             case KEY_RIGHT:
                 nextX++;
+                break;
+            case 'p':
+            case 'P':
+                saveMao();
+                savePlayer();
                 break;
             case 'q':
             case 'Q':
