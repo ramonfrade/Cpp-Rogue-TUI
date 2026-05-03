@@ -29,6 +29,7 @@ class Game {
     }
     ~Game() { endwin(); }
 
+    // Loading the map from a file, so that it can be easily edited and expanded
     void loadMap() {
         std::ifstream file("../map.txt");
 
@@ -51,6 +52,8 @@ class Game {
         }
     }
 
+    // Loading the player's position from a file, so that it can be easily
+    // edited and expanded
     void loadPlayer() {
         std::ifstream file("../player.txt");
 
@@ -65,7 +68,7 @@ class Game {
 
     // Saving the map and player position to a file, so that it can be loaded
     // again when the game is restarted
-    void saveMao() {
+    void saveMap() {
         std::ofstream file("../map.txt");
 
         if (file.is_open()) {
@@ -123,7 +126,7 @@ class Game {
                 break;
             case 'p':
             case 'P':
-                saveMao();
+                saveMap();
                 savePlayer();
                 break;
             case 'q':
