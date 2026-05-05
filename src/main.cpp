@@ -1,5 +1,7 @@
 #include <ncurses.h>
 
+#include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -8,6 +10,10 @@ class Game {
    private:
     int playerY = 0;
     int playerX = 0;
+
+    int enemyY = 0;
+    int enemyX = 0;
+
     bool isRunning;
     std::vector<std::string> map;
 
@@ -22,9 +28,12 @@ class Game {
    public:
     Game()  // Constructing the game, just starting the map in the terminal
     {
+        srand(time(NULL));
         initNcurses();
         loadMap();
         loadPlayer();
+        enemyY = map.size() - 2;
+        enemyX = map[0].size() - 2;
         isRunning = true;
     }
     ~Game() { endwin(); }
@@ -94,6 +103,7 @@ class Game {
                 mvaddch(y, x, map[y][x]);
             }
         }
+        mvaddch(enemyY, enemyX, 'Z');    // positioning the enemy
         mvaddch(playerY, playerX, '@');  // positioning the player
         refresh();
     }
@@ -135,13 +145,38 @@ class Game {
                 break;
         }
 
+        int direction = rand() % 4;
+        int nextEnemyY = enemyY;
+        int nextEnemyX = enemyX;
+
+        switch (direction) {
+            case 0:
+                nextEnemyY--;
+                break;
+            case 1:
+                nextEnemyY++;
+                break;
+            case 2:
+                nextEnemyX--;
+                break;
+            case 3:
+                nextEnemyX++;
+                break;
+        }
+
         if (map[nextY][nextX] != '#') {
-            if (map[nextY][nextX] == '+') {
+            if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
             } else {
                 playerX = nextX;
                 playerY = nextY;
             }
+        }
+
+        if (map[nextEnemyY][nextEnemyX] != '#' &&
+            map[nextEnemyY][nextEnemyX] != '|') {
+            enemyX = nextEnemyX;
+            enemyY = nextEnemyY;
         }
     }
 
