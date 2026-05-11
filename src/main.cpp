@@ -6,14 +6,19 @@
 #include <string>
 #include <vector>
 
+struct Creature {
+    int hp = 0;
+    int attack = 0;
+    int x = 0;
+    int y = 0;
+    char glyph;
+    bool alive = true;
+};
+
 class Game {
    private:
-    int playerY = 0;
-    int playerX = 0;
-
-    int enemyY = 0;
-    int enemyX = 0;
-
+    Creature player;
+    Creature enemy;
     bool isRunning;
     std::vector<std::string> map;
 
@@ -32,8 +37,16 @@ class Game {
         initNcurses();
         loadMap();
         loadPlayer();
-        enemyY = map.size() - 2;
-        enemyX = map[0].size() - 2;
+        loadEnemies();
+        player.hp = 10;
+        player.attack = 2;
+        player.glyph = '@';
+        player.alive = true;
+
+        enemy.hp = 5;
+        enemy.attack = 1;
+        enemy.glyph = 'Z';
+        enemy.alive = true;
         isRunning = true;
     }
     ~Game() { endwin(); }
@@ -67,11 +80,24 @@ class Game {
         std::ifstream file("../player.txt");
 
         if (file.is_open()) {
-            file >> playerY >> playerX;
+            file >> player.y >> player.x;
             file.close();
         } else {
-            playerY = 1;
-            playerX = 1;
+            player.y = 1;
+            player.x = 1;
+        }
+    }
+
+    void loadEnemies() {
+        std::ifstream file("../enemies.txt");
+
+        if (file.is_open()) {
+            file >> enemy.y >> enemy.x;
+
+            file.close();
+        } else {
+            enemy.y = map.size() - 2;
+            enemy.x = map[0].size() - 2;
         }
     }
 
@@ -91,7 +117,17 @@ class Game {
     void savePlayer() {
         std::ofstream file("../player.txt");
         if (file.is_open()) {
-            file << playerY << '\n' << playerX << '\n';
+            file << player.y << '\n' << player.x << '\n';
+            file.close();
+        }
+    }
+
+    void saveEnemies() {
+        std::ofstream file("../enemies.txt");
+        if (file.is_open()) {
+            if (enemy.alive) {
+                file << enemy.y << ' ' << enemy.x << '\n';
+            }
             file.close();
         }
     }
@@ -103,15 +139,17 @@ class Game {
                 mvaddch(y, x, map[y][x]);
             }
         }
-        mvaddch(enemyY, enemyX, 'Z');    // positioning the enemy
-        mvaddch(playerY, playerX, '@');  // positioning the player
+        if (enemy.alive) {
+            mvaddch(enemy.y, enemy.x, enemy.glyph);  // positioning the enemy
+        }
+        mvaddch(player.y, player.x, player.glyph);  // positioning the player
         refresh();
     }
 
     void handleInput() {
         int key = getch();
-        int nextY = playerY;
-        int nextX = playerX;
+        int nextY = player.y;
+        int nextX = player.x;
 
         switch (key) {
             case 'w':
@@ -138,6 +176,7 @@ class Game {
             case 'P':
                 saveMap();
                 savePlayer();
+                saveEnemies();
                 break;
             case 'q':
             case 'Q':
@@ -146,8 +185,8 @@ class Game {
         }
 
         int direction = rand() % 4;
-        int nextEnemyY = enemyY;
-        int nextEnemyX = enemyX;
+        int nextEnemyY = enemy.y;
+        int nextEnemyX = enemy.x;
 
         switch (direction) {
             case 0:
@@ -168,15 +207,15 @@ class Game {
             if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
             } else {
-                playerX = nextX;
-                playerY = nextY;
+                player.x = nextX;
+                player.y = nextY;
             }
         }
 
-        if (map[nextEnemyY][nextEnemyX] != '#' &&
+        if (enemy.alive && map[nextEnemyY][nextEnemyX] != '#' &&
             map[nextEnemyY][nextEnemyX] != '|') {
-            enemyX = nextEnemyX;
-            enemyY = nextEnemyY;
+            enemy.x = nextEnemyX;
+            enemy.y = nextEnemyY;
         }
     }
 
