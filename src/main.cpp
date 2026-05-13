@@ -31,8 +31,7 @@ class Game {
     }
 
    public:
-    Game()  // Constructing the game, just starting the map in the terminal
-    {
+    Game() {
         srand(time(NULL));
         initNcurses();
         loadMap();
@@ -51,7 +50,7 @@ class Game {
     }
     ~Game() { endwin(); }
 
-    // Loading the map from a file, so that it can be easily edited and expanded
+    // Loading the map from a file
     void loadMap() {
         std::ifstream file("../map.txt");
 
@@ -74,8 +73,7 @@ class Game {
         }
     }
 
-    // Loading the player's position from a file, so that it can be easily
-    // edited and expanded
+    // Loading the player's position from a file
     void loadPlayer() {
         std::ifstream file("../player.txt");
 
@@ -88,6 +86,7 @@ class Game {
         }
     }
 
+    // Loading the enemy's position from a file
     void loadEnemies() {
         std::ifstream file("../enemies.txt");
 
@@ -101,8 +100,6 @@ class Game {
         }
     }
 
-    // Saving the map and player position to a file, so that it can be loaded
-    // again when the game is restarted
     void saveMap() {
         std::ofstream file("../map.txt");
 
@@ -139,11 +136,20 @@ class Game {
                 mvaddch(y, x, map[y][x]);
             }
         }
+        mvprintw(11, 1, "Player HP: %d", player.hp);
+        mvprintw(12, 1, "Enemy HP: %d", enemy.hp);
         if (enemy.alive) {
             mvaddch(enemy.y, enemy.x, enemy.glyph);  // positioning the enemy
         }
         mvaddch(player.y, player.x, player.glyph);  // positioning the player
         refresh();
+    }
+
+    void attack(Creature& attacker, Creature& defender) {
+        defender.hp -= attacker.attack;
+        if (defender.hp <= 0) {
+            defender.alive = false;
+        }
     }
 
     void handleInput() {
@@ -206,16 +212,29 @@ class Game {
         if (map[nextY][nextX] != '#') {
             if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
+            } else if (enemy.alive && enemy.y == nextY && enemy.x == nextX) {
+                attack(player, enemy);
             } else {
                 player.x = nextX;
                 player.y = nextY;
             }
         }
 
-        if (enemy.alive && map[nextEnemyY][nextEnemyX] != '#' &&
-            map[nextEnemyY][nextEnemyX] != '|') {
-            enemy.x = nextEnemyX;
-            enemy.y = nextEnemyY;
+        if (enemy.alive && map[nextEnemyY][nextEnemyX] != '#' && map[nextEnemyY][nextEnemyX] != '|') {
+            if (player.alive && player.y == nextEnemyY && player.x == nextEnemyX) {
+                attack(enemy, player);
+            } else {
+                enemy.x = nextEnemyX;
+                enemy.y = nextEnemyY;
+            }
+        }
+
+        if (!player.alive) {
+            clear();
+            printw("You died!");
+            refresh();
+            getch();
+            isRunning = false;
         }
     }
 
