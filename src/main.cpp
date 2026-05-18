@@ -152,6 +152,62 @@ class Game {
         }
     }
 
+    bool enemyCanMove(int y, int x) { return (enemy.alive && map[y][x] != '#' && map[y][x] != '|'); }
+
+    bool isPlayerAt(int y, int x) { return (player.alive && player.y == y && player.x == x); }
+
+    void updateEnemyAI() {
+        int dx = player.x - enemy.x;
+        int dy = player.y - enemy.y;
+
+        int nextEnemyX = enemy.x;
+        int nextEnemyY = enemy.y;
+
+        if (abs(dx) > abs(dy)) {
+            if (dx > 0) {
+                nextEnemyX++;
+                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
+                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
+                        attack(enemy, player);
+                    } else {
+                        enemy.x = nextEnemyX;
+                    }
+                }
+            } else {
+                nextEnemyX--;
+
+                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
+                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
+                        attack(enemy, player);
+                    } else {
+                        enemy.x = nextEnemyX;
+                    }
+                }
+            }
+        } else {
+            if (dy > 0) {
+                nextEnemyY++;
+
+                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
+                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
+                        attack(enemy, player);
+                    } else {
+                        enemy.y = nextEnemyY;
+                    }
+                }
+            } else {
+                nextEnemyY--;
+                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
+                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
+                        attack(enemy, player);
+                    } else {
+                        enemy.y = nextEnemyY;
+                    }
+                }
+            }
+        }
+    }
+
     void handleInput() {
         int key = getch();
         int nextY = player.y;
@@ -190,25 +246,6 @@ class Game {
                 break;
         }
 
-        int direction = rand() % 4;
-        int nextEnemyY = enemy.y;
-        int nextEnemyX = enemy.x;
-
-        switch (direction) {
-            case 0:
-                nextEnemyY--;
-                break;
-            case 1:
-                nextEnemyY++;
-                break;
-            case 2:
-                nextEnemyX--;
-                break;
-            case 3:
-                nextEnemyX++;
-                break;
-        }
-
         if (map[nextY][nextX] != '#') {
             if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
@@ -220,14 +257,7 @@ class Game {
             }
         }
 
-        if (enemy.alive && map[nextEnemyY][nextEnemyX] != '#' && map[nextEnemyY][nextEnemyX] != '|') {
-            if (player.alive && player.y == nextEnemyY && player.x == nextEnemyX) {
-                attack(enemy, player);
-            } else {
-                enemy.x = nextEnemyX;
-                enemy.y = nextEnemyY;
-            }
-        }
+        updateEnemyAI();
 
         if (!player.alive) {
             clear();
