@@ -1,5 +1,8 @@
 #include <ncurses.h>
 
+#include <array>
+#include <climits>
+#include <cstddef>
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
@@ -50,7 +53,8 @@ class Game {
     }
     ~Game() { endwin(); }
 
-    // Loading the map from a file
+    // Loading functions
+
     void loadMap() {
         std::ifstream file("../map.txt");
 
@@ -73,7 +77,6 @@ class Game {
         }
     }
 
-    // Loading the player's position from a file
     void loadPlayer() {
         std::ifstream file("../player.txt");
 
@@ -86,7 +89,6 @@ class Game {
         }
     }
 
-    // Loading the enemy's position from a file
     void loadEnemies() {
         std::ifstream file("../enemies.txt");
 
@@ -157,55 +159,54 @@ class Game {
     bool isPlayerAt(int y, int x) { return (player.alive && player.y == y && player.x == x); }
 
     void updateEnemyAI() {
-        int dx = player.x - enemy.x;
-        int dy = player.y - enemy.y;
+        if (!enemy.alive) return;
 
-        int nextEnemyX = enemy.x;
-        int nextEnemyY = enemy.y;
+        const std::array<int, 4> dy = {-1, 1, 0, 0};
+        const std::array<int, 4> dx = {0, 0, -1, 1};
 
-        if (abs(dx) > abs(dy)) {
-            if (dx > 0) {
-                nextEnemyX++;
-                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
-                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
-                        attack(enemy, player);
-                    } else {
-                        enemy.x = nextEnemyX;
-                    }
-                }
-            } else {
-                nextEnemyX--;
+        int bestY = enemy.y;
+        int bestX = enemy.x;
+        int bestDist = abs(player.y - enemy.y) + abs(player.x - enemy.x);
 
-                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
-                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
-                        attack(enemy, player);
-                    } else {
-                        enemy.x = nextEnemyX;
-                    }
-                }
+        for (size_t i = 0; i < dy.size(); i++) {
+            int ny = enemy.y + dy[i];
+            int nx = enemy.x + dx[i];
+
+            if (!enemyCanMove(ny, nx)) continue;
+
+            if (isPlayerAt(ny, nx)) {
+                attack(enemy, player);
+                return;
             }
-        } else {
-            if (dy > 0) {
-                nextEnemyY++;
 
-                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
-                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
-                        attack(enemy, player);
-                    } else {
-                        enemy.y = nextEnemyY;
-                    }
-                }
-            } else {
-                nextEnemyY--;
-                if (enemyCanMove(nextEnemyY, nextEnemyX)) {
-                    if (isPlayerAt(nextEnemyY, nextEnemyX)) {
-                        attack(enemy, player);
-                    } else {
-                        enemy.y = nextEnemyY;
-                    }
+            int dist = abs(player.y - ny) + abs(player.x - nx);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestY = ny;
+                bestX = nx;
+            }
+        }
+
+        if (bestY == enemy.y && bestX == enemy.x) {
+            int minDist = INT_MAX;
+
+            for (size_t i = 0; i < dy.size(); i++) {
+                int ny = enemy.y + dy[i];
+                int nx = enemy.x + dx[i];
+
+                if (!enemyCanMove(ny, nx)) continue;
+
+                int dist = abs(player.y - ny) + abs(player.x - nx);
+                if (dist < minDist) {
+                    minDist = dist;
+                    bestY = ny;
+                    bestX = nx;
                 }
             }
         }
+
+        enemy.y = bestY;
+        enemy.x = bestX;
     }
 
     void handleInput() {
