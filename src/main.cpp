@@ -53,8 +53,6 @@ class Game {
     }
     ~Game() { endwin(); }
 
-    // Loading functions
-
     void loadMap() {
         std::ifstream file("../map.txt");
 
@@ -68,7 +66,6 @@ class Game {
             file.close();
 
         } else {
-            // If the file cannot be opened, display an error message and exit
             printw("Unable to open map file!");
             refresh();
             getch();
@@ -132,18 +129,22 @@ class Game {
     }
 
     void draw() {
-        clear();  // clearing player's previous trail
+        clear();
         for (int y = 0; y < map.size(); y++) {
             for (int x = 0; x < map[y].size(); x++) {
                 mvaddch(y, x, map[y][x]);
             }
         }
-        mvprintw(11, 1, "Player HP: %d", player.hp);
-        mvprintw(12, 1, "Enemy HP: %d", enemy.hp);
+        mvprintw(11, 0, "Player: HP %d  ATK %d", player.hp, player.attack);
         if (enemy.alive) {
-            mvaddch(enemy.y, enemy.x, enemy.glyph);  // positioning the enemy
+            mvprintw(12, 0, "Enemy:  HP %d", enemy.hp);
         }
-        mvaddch(player.y, player.x, player.glyph);  // positioning the player
+        mvprintw(14, 0, "WASD/arrows: move  P: save  Q: quit");
+
+        if (enemy.alive) {
+            mvaddch(enemy.y, enemy.x, enemy.glyph);
+        }
+        mvaddch(player.y, player.x, player.glyph);
         refresh();
     }
 
