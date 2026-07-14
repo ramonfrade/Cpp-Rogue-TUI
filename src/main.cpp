@@ -3,6 +3,7 @@
 #include <array>
 #include <climits>
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
@@ -176,9 +177,14 @@ class Game {
     }
 
     void attack(Creature& attacker, Creature& defender) {
+        if (!defender.alive) {
+            return;
+        }
+
         defender.hp -= attacker.attack;
         if (defender.hp <= 0) {
             defender.alive = false;
+            defender.hp = 0;
         }
     }
 
@@ -293,6 +299,7 @@ class Game {
         if (!player.alive) {
             clear();
             printw("You died!");
+            std::remove("../player.txt");
             refresh();
             getch();
             isRunning = false;
