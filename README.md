@@ -1,6 +1,6 @@
 # Cpp-Rogue-TUI
 
-A terminal-based roguelike inspired by Vampire Survivors, written in C++ with ncurses.
+A terminal-based roguelike written in C++ with ncurses.
 
 ## Features
 
