@@ -134,6 +134,16 @@ class Game {
         }
     }
 
+    bool isInBounds(int y, int x) {
+        if (y < 0 || x < 0) {
+            return false;
+        }
+        if (y < map.size() && x < map[y].size()) {
+            return true;
+        }
+        return false;
+    }
+
     void draw() {
         clear();
         for (int y = 0; y < map.size(); y++) {
@@ -172,7 +182,9 @@ class Game {
         }
     }
 
-    bool enemyCanMove(int y, int x) { return (enemy.alive && map[y][x] != '#' && map[y][x] != '|'); }
+    bool enemyCanMove(int y, int x) {
+        return (enemy.alive && isInBounds(y, x) && map[y][x] != '#' && map[y][x] != '|');
+    }
 
     bool isPlayerAt(int y, int x) { return (player.alive && player.y == y && player.x == x); }
 
@@ -265,7 +277,7 @@ class Game {
                 break;
         }
 
-        if (map[nextY][nextX] != '#') {
+        if (isInBounds(nextY, nextX) && map[nextY][nextX] != '#') {
             if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
             } else if (enemy.alive && enemy.y == nextY && enemy.x == nextX) {
