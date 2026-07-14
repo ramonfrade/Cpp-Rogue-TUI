@@ -38,9 +38,6 @@ class Game {
     Game() {
         srand(time(NULL));
         initNcurses();
-        loadMap();
-        loadPlayer();
-        loadEnemies();
         player.maxHp = 10;
         player.hp = player.maxHp;
         player.attack = 2;
@@ -52,6 +49,9 @@ class Game {
         enemy.glyph = 'Z';
         enemy.alive = true;
         isRunning = true;
+        loadMap();
+        loadPlayer();
+        loadEnemies();
     }
     ~Game() { endwin(); }
 
