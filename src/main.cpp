@@ -11,6 +11,7 @@
 
 struct Creature {
     int hp = 0;
+    int maxHp = 0;
     int attack = 0;
     int x = 0;
     int y = 0;
@@ -40,7 +41,8 @@ class Game {
         loadMap();
         loadPlayer();
         loadEnemies();
-        player.hp = 10;
+        player.maxHp = 10;
+        player.hp = player.maxHp;
         player.attack = 2;
         player.glyph = '@';
         player.alive = true;
@@ -78,7 +80,7 @@ class Game {
         std::ifstream file("../player.txt");
 
         if (file.is_open()) {
-            file >> player.y >> player.x;
+            file >> player.y >> player.x >> player.hp >> player.maxHp >> player.attack;
             file.close();
         } else {
             player.y = 1;
@@ -113,7 +115,11 @@ class Game {
     void savePlayer() {
         std::ofstream file("../player.txt");
         if (file.is_open()) {
-            file << player.y << '\n' << player.x << '\n';
+            file << player.y << '\n'
+                 << player.x << '\n'
+                 << player.hp << '\n'
+                 << player.maxHp << '\n'
+                 << player.attack << '\n';
             file.close();
         }
     }
@@ -135,11 +141,22 @@ class Game {
                 mvaddch(y, x, map[y][x]);
             }
         }
-        mvprintw(11, 0, "Player: HP %d  ATK %d", player.hp, player.attack);
-        if (enemy.alive) {
-            mvprintw(12, 0, "Enemy:  HP %d", enemy.hp);
+
+        int barSize = 10;
+        int filled = player.hp * barSize / player.maxHp;
+        mvprintw(12, 0, "HP [");
+        for (int i = 0; i < filled; i++) {
+            mvprintw(12, 4 + i, "#");
         }
-        mvprintw(14, 0, "WASD/arrows: move  P: save  Q: quit");
+        for (int i = filled; i < barSize; i++) {
+            mvprintw(12, 4 + i, "-");
+        }
+        mvprintw(12, 4 + barSize, "] ATK: %d", player.attack);
+
+        if (enemy.alive) {
+            mvprintw(13, 0, "Enemy: HP %d", enemy.hp);
+        }
+        mvprintw(15, 0, "WASD/arrows: move  P: save  Q: quit");
 
         if (enemy.alive) {
             mvaddch(enemy.y, enemy.x, enemy.glyph);
