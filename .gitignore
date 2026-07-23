@@ -3,3 +3,5 @@ build/
 *.o
 .clang-format
 test.cpp
+player.txt
+enemies.txt

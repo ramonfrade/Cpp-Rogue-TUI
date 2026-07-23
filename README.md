@@ -8,6 +8,7 @@ A terminal-based roguelike written in C++ with ncurses.
 - Bump-to-attack combat
 - Simple enemy AI
 - Save/load (press P)
+- Creature templates system (stats loaded from creatures.txt)
 
 ## Requirements
 

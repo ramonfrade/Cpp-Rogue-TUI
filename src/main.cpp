@@ -18,6 +18,7 @@ struct CreatureTemplate {
 };
 
 struct Creature {
+    std::string templateName;
     int hp = 0;
     int maxHp = 0;
     int attack = 0;
@@ -50,14 +51,16 @@ class Game {
 
         loadCreatures();
 
-        CreatureTemplate t = findTemplate("player");
+        player.templateName = "player";
+        CreatureTemplate t = findTemplate(player.templateName);
         player.maxHp = t.maxHp;
         player.hp = t.maxHp;
         player.attack = t.attack;
         player.glyph = t.glyph;
         player.alive = true;
 
-        t = findTemplate("zombie");
+        enemy.templateName = "zombie";
+        t = findTemplate(enemy.templateName);
         enemy.maxHp = t.maxHp;
         enemy.hp = t.maxHp;
         enemy.attack = t.attack;
@@ -104,13 +107,17 @@ class Game {
         }
     }
 
-    CreatureTemplate findTemplate(std::string name) {
+    CreatureTemplate findTemplate(const std::string& name) {
         for (int i = 0; i < templates.size(); i++) {
             if (templates[i].name == name) {
                 return templates[i];
             }
         }
-        return templates[0];
+        printw("Error: template '%s' not found!", name.c_str());
+        refresh();
+        getch();
+        endwin();
+        exit(1);
     }
 
     void loadCreatures() {
@@ -128,6 +135,20 @@ class Game {
                 example.glyph = glyph;
                 templates.push_back(example);
             }
+            file.close();
+        } else {
+            printw("Unable to open creatures file!");
+            refresh();
+            getch();
+            endwin();
+            exit(1);
+        }
+        if (templates.empty()) {
+            printw("Unable to load creature templates!");
+            refresh();
+            getch();
+            endwin();
+            exit(1);
         }
     }
 
@@ -135,7 +156,7 @@ class Game {
         std::ifstream file("../enemies.txt");
 
         if (file.is_open()) {
-            file >> enemy.y >> enemy.x;
+            file >> enemy.y >> enemy.x >> enemy.hp;
 
             file.close();
         } else {
@@ -167,7 +188,7 @@ class Game {
         std::ofstream file("../enemies.txt");
         if (file.is_open()) {
             if (enemy.alive) {
-                file << enemy.y << ' ' << enemy.x << '\n';
+                file << enemy.y << ' ' << enemy.x << ' ' << enemy.hp << '\n';
             }
             file.close();
         }
