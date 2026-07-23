@@ -10,6 +10,13 @@
 #include <string>
 #include <vector>
 
+struct CreatureTemplate {
+    std::string name;
+    int maxHp = 0;
+    int attack = 0;
+    char glyph;
+};
+
 struct Creature {
     int hp = 0;
     int maxHp = 0;
@@ -26,6 +33,7 @@ class Game {
     Creature enemy;
     bool isRunning;
     std::vector<std::string> map;
+    std::vector<CreatureTemplate> templates;
 
     void initNcurses() {
         initscr();
@@ -39,16 +47,23 @@ class Game {
     Game() {
         srand(time(NULL));
         initNcurses();
-        player.maxHp = 10;
-        player.hp = player.maxHp;
-        player.attack = 2;
-        player.glyph = '@';
+
+        loadCreatures();
+
+        CreatureTemplate t = findTemplate("player");
+        player.maxHp = t.maxHp;
+        player.hp = t.maxHp;
+        player.attack = t.attack;
+        player.glyph = t.glyph;
         player.alive = true;
 
-        enemy.hp = 5;
-        enemy.attack = 1;
-        enemy.glyph = 'Z';
+        t = findTemplate("zombie");
+        enemy.maxHp = t.maxHp;
+        enemy.hp = t.maxHp;
+        enemy.attack = t.attack;
+        enemy.glyph = t.glyph;
         enemy.alive = true;
+
         isRunning = true;
         loadMap();
         loadPlayer();
@@ -81,11 +96,38 @@ class Game {
         std::ifstream file("../player.txt");
 
         if (file.is_open()) {
-            file >> player.y >> player.x >> player.hp >> player.maxHp >> player.attack;
+            file >> player.y >> player.x >> player.hp;
             file.close();
         } else {
             player.y = 1;
             player.x = 1;
+        }
+    }
+
+    CreatureTemplate findTemplate(std::string name) {
+        for (int i = 0; i < templates.size(); i++) {
+            if (templates[i].name == name) {
+                return templates[i];
+            }
+        }
+        return templates[0];
+    }
+
+    void loadCreatures() {
+        CreatureTemplate example;
+        std::string name;
+        int maxHp = 0;
+        int attack = 0;
+        char glyph;
+        std::ifstream file("../creatures.txt");
+        if (file.is_open()) {
+            while (file >> name >> maxHp >> attack >> glyph) {
+                example.name = name;
+                example.maxHp = maxHp;
+                example.attack = attack;
+                example.glyph = glyph;
+                templates.push_back(example);
+            }
         }
     }
 
@@ -116,11 +158,7 @@ class Game {
     void savePlayer() {
         std::ofstream file("../player.txt");
         if (file.is_open()) {
-            file << player.y << '\n'
-                 << player.x << '\n'
-                 << player.hp << '\n'
-                 << player.maxHp << '\n'
-                 << player.attack << '\n';
+            file << player.y << '\n' << player.x << '\n' << player.hp << '\n';
             file.close();
         }
     }

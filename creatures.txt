@@ -1,0 +1,4 @@
+player 10 2 @
+zombie 5 1 Z
+orc 8 2 o
+skeleton 3 3 s
