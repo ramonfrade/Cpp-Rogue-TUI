@@ -31,10 +31,18 @@ struct Creature {
 class Game {
    private:
     Creature player;
-    Creature enemy;
+    std::vector<Creature> enemies;
     bool isRunning;
     std::vector<std::string> map;
     std::vector<CreatureTemplate> templates;
+
+    void fatalError(const std::string& message) {
+        printw("%s", message.c_str());
+        refresh();
+        getch();
+        endwin();
+        exit(1);
+    }
 
     void initNcurses() {
         initscr();
@@ -59,18 +67,15 @@ class Game {
         player.glyph = t.glyph;
         player.alive = true;
 
-        enemy.templateName = "zombie";
-        t = findTemplate(enemy.templateName);
-        enemy.maxHp = t.maxHp;
-        enemy.hp = t.maxHp;
-        enemy.attack = t.attack;
-        enemy.glyph = t.glyph;
-        enemy.alive = true;
-
         isRunning = true;
         loadMap();
         loadPlayer();
         loadEnemies();
+
+        if (enemies.empty()) {
+            spawnEnemy("zombie", 3, 3);
+            spawnEnemy("zombie", 5, 5);
+        }
     }
     ~Game() { endwin(); }
 
@@ -87,11 +92,7 @@ class Game {
             file.close();
 
         } else {
-            printw("Unable to open map file!");
-            refresh();
-            getch();
-            endwin();
-            exit(1);
+            fatalError("Unable to open map file!");
         }
     }
 
@@ -113,12 +114,33 @@ class Game {
                 return templates[i];
             }
         }
-        printw("Error: template '%s' not found!", name.c_str());
-        refresh();
-        getch();
-        endwin();
-        exit(1);
+        fatalError("Error: template '" + name + "' not found!");
+        return {};
     }
+
+    void spawnEnemy(const std::string& templateName, int x, int y) {
+        Creature enemy;
+
+        enemy.templateName = templateName;
+
+        CreatureTemplate t = findTemplate(templateName);
+
+        enemy.maxHp = t.maxHp;
+
+        enemy.hp = t.maxHp;
+
+        enemy.attack = t.attack;
+
+        enemy.glyph = t.glyph;
+
+        enemy.alive = true;
+
+        enemy.x = x;
+
+        enemy.y = y;
+
+        enemies.push_back(enemy);
+    };
 
     void loadCreatures() {
         CreatureTemplate example;
@@ -137,18 +159,10 @@ class Game {
             }
             file.close();
         } else {
-            printw("Unable to open creatures file!");
-            refresh();
-            getch();
-            endwin();
-            exit(1);
+            fatalError("Unable to open creatures file!");
         }
         if (templates.empty()) {
-            printw("Unable to load creature templates!");
-            refresh();
-            getch();
-            endwin();
-            exit(1);
+            fatalError("Unable to load creature templates!");
         }
     }
 
@@ -156,12 +170,17 @@ class Game {
         std::ifstream file("../enemies.txt");
 
         if (file.is_open()) {
-            file >> enemy.y >> enemy.x >> enemy.hp;
+            int y = 0;
+            int x = 0;
+            int hp = 0;
+            std::string templateName;
+
+            while (file >> y >> x >> hp >> templateName) {
+                spawnEnemy(templateName, x, y);
+                enemies.back().hp = hp;
+            }
 
             file.close();
-        } else {
-            enemy.y = map.size() - 2;
-            enemy.x = map[0].size() - 2;
         }
     }
 
@@ -187,8 +206,11 @@ class Game {
     void saveEnemies() {
         std::ofstream file("../enemies.txt");
         if (file.is_open()) {
-            if (enemy.alive) {
-                file << enemy.y << ' ' << enemy.x << ' ' << enemy.hp << '\n';
+            for (int i = 0; i < enemies.size(); i++) {
+                if (enemies[i].alive) {
+                    file << enemies[i].y << ' ' << enemies[i].x << ' ' << enemies[i].hp << ' '
+                         << enemies[i].templateName << '\n';
+                }
             }
             file.close();
         }
@@ -223,14 +245,13 @@ class Game {
         }
         mvprintw(12, 4 + barSize, "] ATK: %d", player.attack);
 
-        if (enemy.alive) {
-            mvprintw(13, 0, "Enemy: HP %d", enemy.hp);
+        for (int i = 0; i < enemies.size(); i++) {
+            if (enemies[i].alive) {
+                mvaddch(enemies[i].y, enemies[i].x, enemies[i].glyph);
+            }
         }
-        mvprintw(15, 0, "WASD/arrows: move  P: save  Q: quit");
 
-        if (enemy.alive) {
-            mvaddch(enemy.y, enemy.x, enemy.glyph);
-        }
+        mvprintw(15, 0, "WASD/arrows: move  P: save  Q: quit");
         mvaddch(player.y, player.x, player.glyph);
         refresh();
     }
@@ -247,61 +268,92 @@ class Game {
         }
     }
 
-    bool enemyCanMove(int y, int x) {
+    bool enemyCanMove(const Creature& enemy, int y, int x) {
         return (enemy.alive && isInBounds(y, x) && map[y][x] != '#' && map[y][x] != '|');
     }
 
     bool isPlayerAt(int y, int x) { return (player.alive && player.y == y && player.x == x); }
 
-    void updateEnemyAI() {
-        if (!enemy.alive) return;
+    bool isOccupied(int y, int x, int excludeEnemyIndex) {
+        if (isPlayerAt(y, x)) return true;
 
-        const std::array<int, 4> dy = {-1, 1, 0, 0};
-        const std::array<int, 4> dx = {0, 0, -1, 1};
-
-        int bestY = enemy.y;
-        int bestX = enemy.x;
-        int bestDist = abs(player.y - enemy.y) + abs(player.x - enemy.x);
-
-        for (size_t i = 0; i < dy.size(); i++) {
-            int ny = enemy.y + dy[i];
-            int nx = enemy.x + dx[i];
-
-            if (!enemyCanMove(ny, nx)) continue;
-
-            if (isPlayerAt(ny, nx)) {
-                attack(enemy, player);
-                return;
-            }
-
-            int dist = abs(player.y - ny) + abs(player.x - nx);
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestY = ny;
-                bestX = nx;
-            }
+        for (int i = 0; i < enemies.size(); i++) {
+            if (i == excludeEnemyIndex) continue;
+            if (enemies[i].alive && enemies[i].y == y && enemies[i].x == x) return true;
         }
+        return false;
+    }
 
-        if (bestY == enemy.y && bestX == enemy.x) {
-            int minDist = INT_MAX;
+    void updateEnemyAI() {
+        for (int i = 0; i < enemies.size(); i++) {
+            if (!enemies[i].alive) continue;
 
-            for (size_t i = 0; i < dy.size(); i++) {
-                int ny = enemy.y + dy[i];
-                int nx = enemy.x + dx[i];
+            const std::array<int, 4> dy = {-1, 1, 0, 0};
 
-                if (!enemyCanMove(ny, nx)) continue;
+            const std::array<int, 4> dx = {0, 0, -1, 1};
+
+            int bestY = enemies[i].y;
+
+            int bestX = enemies[i].x;
+
+            int bestDist = abs(player.y - enemies[i].y) + abs(player.x - enemies[i].x);
+
+            bool attacked = false;
+
+            for (size_t j = 0; j < dy.size(); j++) {
+                int ny = enemies[i].y + dy[j];
+
+                int nx = enemies[i].x + dx[j];
+
+                if (!enemyCanMove(enemies[i], ny, nx)) continue;
+
+                if (isPlayerAt(ny, nx)) {
+                    attack(enemies[i], player);
+                    attacked = true;
+                    break;
+                }
+
+                if (isOccupied(ny, nx, i)) continue;
 
                 int dist = abs(player.y - ny) + abs(player.x - nx);
-                if (dist < minDist) {
-                    minDist = dist;
+
+                if (dist < bestDist) {
+                    bestDist = dist;
+
                     bestY = ny;
+
                     bestX = nx;
                 }
             }
-        }
 
-        enemy.y = bestY;
-        enemy.x = bestX;
+            if (attacked) continue;
+
+            if (bestY == enemies[i].y && bestX == enemies[i].x) {
+                int minDist = INT_MAX;
+
+                for (size_t j = 0; j < dy.size(); j++) {
+                    int ny = enemies[i].y + dy[j];
+
+                    int nx = enemies[i].x + dx[j];
+
+                    if (!enemyCanMove(enemies[i], ny, nx)) continue;
+                    if (isOccupied(ny, nx, i)) continue;
+
+                    int dist = abs(player.y - ny) + abs(player.x - nx);
+
+                    if (dist < minDist) {
+                        minDist = dist;
+
+                        bestY = ny;
+
+                        bestX = nx;
+                    }
+                }
+            }
+
+            enemies[i].y = bestY;
+            enemies[i].x = bestX;
+        }
     }
 
     void handleInput() {
@@ -335,25 +387,43 @@ class Game {
                 saveMap();
                 savePlayer();
                 saveEnemies();
-                break;
+                return;
             case 'q':
             case 'Q':
                 isRunning = false;
-                break;
+                return;
         }
 
+        if (nextY == player.y && nextX == player.x) {
+            return;
+        }
+
+        bool acted = true;
         if (isInBounds(nextY, nextX) && map[nextY][nextX] != '#') {
             if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
-            } else if (enemy.alive && enemy.y == nextY && enemy.x == nextX) {
-                attack(player, enemy);
+                acted = true;
             } else {
-                player.x = nextX;
-                player.y = nextY;
+                bool hitEnemy = false;
+                for (int i = 0; i < enemies.size(); i++) {
+                    if (enemies[i].alive && enemies[i].y == nextY && enemies[i].x == nextX) {
+                        attack(player, enemies[i]);
+                        hitEnemy = true;
+                        acted = true;
+                        break;
+                    }
+                }
+                if (!hitEnemy) {
+                    player.x = nextX;
+                    player.y = nextY;
+                    acted = true;
+                }
             }
         }
 
-        updateEnemyAI();
+        if (acted) {
+            updateEnemyAI();
+        }
 
         if (!player.alive) {
             clear();
