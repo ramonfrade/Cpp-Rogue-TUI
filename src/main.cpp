@@ -32,7 +32,7 @@ class Game {
    private:
     Creature player;
     std::vector<Creature> enemies;
-    bool isRunning;
+    bool isRunning = false;
     std::vector<std::string> map;
     std::vector<CreatureTemplate> templates;
 
@@ -59,13 +59,7 @@ class Game {
 
         loadCreatures();
 
-        player.templateName = "player";
-        CreatureTemplate t = findTemplate(player.templateName);
-        player.maxHp = t.maxHp;
-        player.hp = t.maxHp;
-        player.attack = t.attack;
-        player.glyph = t.glyph;
-        player.alive = true;
+        applyTemplate(player, findTemplate("player"));
 
         isRunning = true;
         loadMap();
@@ -118,29 +112,22 @@ class Game {
         return {};
     }
 
+    void applyTemplate(Creature& c, const CreatureTemplate& t) {
+        c.templateName = t.name;
+        c.maxHp = t.maxHp;
+        c.hp = t.maxHp;
+        c.attack = t.attack;
+        c.glyph = t.glyph;
+        c.alive = true;
+    }
+
     void spawnEnemy(const std::string& templateName, int x, int y) {
         Creature enemy;
-
-        enemy.templateName = templateName;
-
-        CreatureTemplate t = findTemplate(templateName);
-
-        enemy.maxHp = t.maxHp;
-
-        enemy.hp = t.maxHp;
-
-        enemy.attack = t.attack;
-
-        enemy.glyph = t.glyph;
-
-        enemy.alive = true;
-
+        applyTemplate(enemy, findTemplate(templateName));
         enemy.x = x;
-
         enemy.y = y;
-
         enemies.push_back(enemy);
-    };
+    }
 
     void loadCreatures() {
         CreatureTemplate example;
@@ -289,20 +276,15 @@ class Game {
             if (!enemies[i].alive) continue;
 
             const std::array<int, 4> dy = {-1, 1, 0, 0};
-
             const std::array<int, 4> dx = {0, 0, -1, 1};
 
             int bestY = enemies[i].y;
-
             int bestX = enemies[i].x;
-
-            int bestDist = abs(player.y - enemies[i].y) + abs(player.x - enemies[i].x);
-
+            int bestDist = INT_MAX;
             bool attacked = false;
 
             for (size_t j = 0; j < dy.size(); j++) {
                 int ny = enemies[i].y + dy[j];
-
                 int nx = enemies[i].x + dx[j];
 
                 if (!enemyCanMove(enemies[i], ny, nx)) continue;
@@ -319,37 +301,12 @@ class Game {
 
                 if (dist < bestDist) {
                     bestDist = dist;
-
                     bestY = ny;
-
                     bestX = nx;
                 }
             }
 
             if (attacked) continue;
-
-            if (bestY == enemies[i].y && bestX == enemies[i].x) {
-                int minDist = INT_MAX;
-
-                for (size_t j = 0; j < dy.size(); j++) {
-                    int ny = enemies[i].y + dy[j];
-
-                    int nx = enemies[i].x + dx[j];
-
-                    if (!enemyCanMove(enemies[i], ny, nx)) continue;
-                    if (isOccupied(ny, nx, i)) continue;
-
-                    int dist = abs(player.y - ny) + abs(player.x - nx);
-
-                    if (dist < minDist) {
-                        minDist = dist;
-
-                        bestY = ny;
-
-                        bestX = nx;
-                    }
-                }
-            }
 
             enemies[i].y = bestY;
             enemies[i].x = bestX;
@@ -398,32 +355,26 @@ class Game {
             return;
         }
 
-        bool acted = true;
         if (isInBounds(nextY, nextX) && map[nextY][nextX] != '#') {
             if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
-                acted = true;
             } else {
                 bool hitEnemy = false;
                 for (int i = 0; i < enemies.size(); i++) {
                     if (enemies[i].alive && enemies[i].y == nextY && enemies[i].x == nextX) {
                         attack(player, enemies[i]);
                         hitEnemy = true;
-                        acted = true;
                         break;
                     }
                 }
                 if (!hitEnemy) {
                     player.x = nextX;
                     player.y = nextY;
-                    acted = true;
                 }
             }
         }
 
-        if (acted) {
-            updateEnemyAI();
-        }
+        updateEnemyAI();
 
         if (!player.alive) {
             clear();
