@@ -213,6 +213,18 @@ class Game {
         return false;
     }
 
+    void drawBar(int y, int x, int hp, int maxHp, int barSize) {
+        int filled = hp * barSize / maxHp;
+        mvprintw(y, x, "[");
+        for (int i = 0; i < filled; i++) {
+            mvprintw(y, x + 1 + i, "#");
+        }
+        for (int i = filled; i < barSize; i++) {
+            mvprintw(y, x + 1 + i, "-");
+        }
+        mvprintw(y, x + barSize + 1, "]");
+    }
+
     void draw() {
         clear();
         for (int y = 0; y < map.size(); y++) {
@@ -221,20 +233,22 @@ class Game {
             }
         }
 
-        int barSize = 10;
-        int filled = player.hp * barSize / player.maxHp;
-        mvprintw(12, 0, "HP [");
-        for (int i = 0; i < filled; i++) {
-            mvprintw(12, 4 + i, "#");
-        }
-        for (int i = filled; i < barSize; i++) {
-            mvprintw(12, 4 + i, "-");
-        }
-        mvprintw(12, 4 + barSize, "] ATK: %d", player.attack);
+        drawBar(12, 3, player.hp, player.maxHp, 10);
+        mvprintw(12, 0, "HP ");
+        mvprintw(12, 3 + 12, " ATK: %d", player.attack);
 
         for (int i = 0; i < enemies.size(); i++) {
             if (enemies[i].alive) {
                 mvaddch(enemies[i].y, enemies[i].x, enemies[i].glyph);
+
+                int dist = abs(player.y - enemies[i].y) + abs(player.x - enemies[i].x);
+                if (dist <= 3 && enemies[i].y - 1 >= 0 && enemies[i].x - 3 >= 0) {
+                    int barSize = 5;
+                    int filled = enemies[i].hp * barSize / enemies[i].maxHp;
+                    if (filled < barSize) {  // Only when enemy isn`t with full hp
+                        drawBar(enemies[i].y - 1, enemies[i].x - 3, enemies[i].hp, enemies[i].maxHp, barSize);
+                    }
+                }
             }
         }
 
