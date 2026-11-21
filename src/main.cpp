@@ -10,16 +10,14 @@
 #include <string>
 #include <vector>
 
-struct CreatureTemplate
-{
+struct CreatureTemplate {
     std::string name;
     int maxHp = 0;
     int attack = 0;
     char glyph;
 };
 
-struct Creature
-{
+struct Creature {
     std::string templateName;
     int hp = 0;
     int maxHp = 0;
@@ -30,22 +28,16 @@ struct Creature
     bool alive = true;
 };
 
-class Game
-{
+class Game {
 private:
     Creature player;
     std::vector<Creature> enemies;
     bool isRunning = false;
     std::vector<std::string> map;
     std::vector<CreatureTemplate> templates;
-    enum
-    {
-        CP_PLAYER = 1,
-        CP_ENEMY = 2
-    };
+    enum { CP_PLAYER = 1, CP_ENEMY = 2 };
 
-    void fatalError(const std::string &message)
-    {
+    void fatalError(const std::string& message) {
         printw("%s", message.c_str());
         refresh();
         getch();
@@ -53,8 +45,7 @@ private:
         exit(1);
     }
 
-    void initNcurses()
-    {
+    void initNcurses() {
         initscr();
         raw();
         noecho();
@@ -67,8 +58,7 @@ private:
     }
 
 public:
-    Game()
-    {
+    Game() {
         srand(time(NULL));
         initNcurses();
 
@@ -81,57 +71,44 @@ public:
         loadPlayer();
         loadEnemies();
 
-        if (enemies.empty())
-        {
+        if (enemies.empty()) {
             spawnEnemy("zombie", 3, 3);
             spawnEnemy("zombie", 5, 5);
         }
     }
     ~Game() { endwin(); }
 
-    void loadMap()
-    {
+    void loadMap() {
         std::ifstream file("../map.txt");
 
         std::string line;
 
-        if (file.is_open())
-        {
-            while (std::getline(file, line))
-            {
+        if (file.is_open()) {
+            while (std::getline(file, line)) {
                 map.push_back(line);
             }
 
             file.close();
-        }
-        else
-        {
+        } else {
             fatalError("Unable to open map file!");
         }
     }
 
-    void loadPlayer()
-    {
+    void loadPlayer() {
         std::ifstream file("../player.txt");
 
-        if (file.is_open())
-        {
+        if (file.is_open()) {
             file >> player.y >> player.x >> player.hp;
             file.close();
-        }
-        else
-        {
+        } else {
             player.y = 1;
             player.x = 1;
         }
     }
 
-    CreatureTemplate findTemplate(const std::string &name)
-    {
-        for (int i = 0; i < templates.size(); i++)
-        {
-            if (templates[i].name == name)
-            {
+    CreatureTemplate findTemplate(const std::string& name) {
+        for (int i = 0; i < templates.size(); i++) {
+            if (templates[i].name == name) {
                 return templates[i];
             }
         }
@@ -139,8 +116,7 @@ public:
         return {};
     }
 
-    void applyTemplate(Creature &c, const CreatureTemplate &t)
-    {
+    void applyTemplate(Creature& c, const CreatureTemplate& t) {
         c.templateName = t.name;
         c.maxHp = t.maxHp;
         c.hp = t.maxHp;
@@ -149,8 +125,7 @@ public:
         c.alive = true;
     }
 
-    void spawnEnemy(const std::string &templateName, int x, int y)
-    {
+    void spawnEnemy(const std::string& templateName, int x, int y) {
         Creature enemy;
         applyTemplate(enemy, findTemplate(templateName));
         enemy.x = x;
@@ -158,18 +133,15 @@ public:
         enemies.push_back(enemy);
     }
 
-    void loadCreatures()
-    {
+    void loadCreatures() {
         CreatureTemplate example;
         std::string name;
         int maxHp = 0;
         int attack = 0;
         char glyph;
         std::ifstream file("../creatures.txt");
-        if (file.is_open())
-        {
-            while (file >> name >> maxHp >> attack >> glyph)
-            {
+        if (file.is_open()) {
+            while (file >> name >> maxHp >> attack >> glyph) {
                 example.name = name;
                 example.maxHp = maxHp;
                 example.attack = attack;
@@ -177,30 +149,24 @@ public:
                 templates.push_back(example);
             }
             file.close();
-        }
-        else
-        {
+        } else {
             fatalError("Unable to open creatures file!");
         }
-        if (templates.empty())
-        {
+        if (templates.empty()) {
             fatalError("Unable to load creature templates!");
         }
     }
 
-    void loadEnemies()
-    {
+    void loadEnemies() {
         std::ifstream file("../enemies.txt");
 
-        if (file.is_open())
-        {
+        if (file.is_open()) {
             int y = 0;
             int x = 0;
             int hp = 0;
             std::string templateName;
 
-            while (file >> y >> x >> hp >> templateName)
-            {
+            while (file >> y >> x >> hp >> templateName) {
                 spawnEnemy(templateName, x, y);
                 enemies.back().hp = hp;
             }
@@ -209,41 +175,30 @@ public:
         }
     }
 
-    void saveMap()
-    {
+    void saveMap() {
         std::ofstream file("../map.txt");
 
-        if (file.is_open())
-        {
-            for (int i = 0; i < map.size(); i++)
-            {
+        if (file.is_open()) {
+            for (int i = 0; i < map.size(); i++) {
                 file << map[i] << '\n';
             }
             file.close();
         }
     }
 
-    void savePlayer()
-    {
+    void savePlayer() {
         std::ofstream file("../player.txt");
-        if (file.is_open())
-        {
-            file << player.y << '\n'
-                 << player.x << '\n'
-                 << player.hp << '\n';
+        if (file.is_open()) {
+            file << player.y << '\n' << player.x << '\n' << player.hp << '\n';
             file.close();
         }
     }
 
-    void saveEnemies()
-    {
+    void saveEnemies() {
         std::ofstream file("../enemies.txt");
-        if (file.is_open())
-        {
-            for (int i = 0; i < enemies.size(); i++)
-            {
-                if (enemies[i].alive)
-                {
+        if (file.is_open()) {
+            for (int i = 0; i < enemies.size(); i++) {
+                if (enemies[i].alive) {
                     file << enemies[i].y << ' ' << enemies[i].x << ' ' << enemies[i].hp << ' '
                          << enemies[i].templateName << '\n';
                 }
@@ -252,43 +207,34 @@ public:
         }
     }
 
-    bool isInBounds(int y, int x)
-    {
-        if (y < 0 || x < 0)
-        {
+    bool isInBounds(int y, int x) {
+        if (y < 0 || x < 0) {
             return false;
         }
-        if (y < map.size() && x < map[y].size())
-        {
+        if (y < map.size() && x < map[y].size()) {
             return true;
         }
         return false;
     }
 
-    void drawBar(int y, int x, int hp, int maxHp, int barSize, int colorPair)
-    {
+    void drawBar(int y, int x, int hp, int maxHp, int barSize, int colorPair) {
         attron(COLOR_PAIR(colorPair));
         int filled = hp * barSize / maxHp;
         mvprintw(y, x, "[");
-        for (int i = 0; i < filled; i++)
-        {
+        for (int i = 0; i < filled; i++) {
             mvprintw(y, x + 1 + i, "#");
         }
-        for (int i = filled; i < barSize; i++)
-        {
+        for (int i = filled; i < barSize; i++) {
             mvprintw(y, x + 1 + i, "-");
         }
         mvprintw(y, x + barSize + 1, "]");
         attroff(COLOR_PAIR(colorPair));
     }
 
-    void draw()
-    {
+    void draw() {
         clear();
-        for (int y = 0; y < map.size(); y++)
-        {
-            for (int x = 0; x < map[y].size(); x++)
-            {
+        for (int y = 0; y < map.size(); y++) {
+            for (int x = 0; x < map[y].size(); x++) {
                 mvaddch(y, x, map[y][x]);
             }
         }
@@ -297,21 +243,17 @@ public:
         mvprintw(12, 0, "HP ");
         mvprintw(12, 3 + 12, " ATK: %d", player.attack);
 
-        for (int i = 0; i < enemies.size(); i++)
-        {
-            if (enemies[i].alive)
-            {
+        for (int i = 0; i < enemies.size(); i++) {
+            if (enemies[i].alive) {
                 attron(COLOR_PAIR(CP_ENEMY));
                 mvaddch(enemies[i].y, enemies[i].x, enemies[i].glyph);
                 attroff(COLOR_PAIR(CP_ENEMY));
 
                 int dist = abs(player.y - enemies[i].y) + abs(player.x - enemies[i].x);
-                if (dist <= 3 && enemies[i].y - 1 >= 0 && enemies[i].x - 3 >= 0)
-                {
+                if (dist <= 3 && enemies[i].y - 1 >= 0 && enemies[i].x - 3 >= 0) {
                     int barSize = 5;
                     int filled = enemies[i].hp * barSize / enemies[i].maxHp;
-                    if (filled < barSize)
-                    { // Only show bar for damaged enemies.
+                    if (filled < barSize) {  // Only show bar for damaged enemies.
                         drawBar(enemies[i].y - 1, enemies[i].x - 3, enemies[i].hp, enemies[i].maxHp, barSize, CP_ENEMY);
                     }
                 }
@@ -325,49 +267,37 @@ public:
         refresh();
     }
 
-    void attack(Creature &attacker, Creature &defender)
-    {
-        if (!defender.alive)
-        {
+    void attack(Creature& attacker, Creature& defender) {
+        if (!defender.alive) {
             return;
         }
 
         defender.hp -= attacker.attack;
-        if (defender.hp <= 0)
-        {
+        if (defender.hp <= 0) {
             defender.alive = false;
             defender.hp = 0;
         }
     }
 
-    bool enemyCanMove(const Creature &enemy, int y, int x)
-    {
+    bool enemyCanMove(const Creature& enemy, int y, int x) {
         return (enemy.alive && isInBounds(y, x) && map[y][x] != '#' && map[y][x] != '|');
     }
 
     bool isPlayerAt(int y, int x) { return (player.alive && player.y == y && player.x == x); }
 
-    bool isOccupied(int y, int x, int excludeEnemyIndex)
-    {
-        if (isPlayerAt(y, x))
-            return true;
+    bool isOccupied(int y, int x, int excludeEnemyIndex) {
+        if (isPlayerAt(y, x)) return true;
 
-        for (int i = 0; i < enemies.size(); i++)
-        {
-            if (i == excludeEnemyIndex)
-                continue;
-            if (enemies[i].alive && enemies[i].y == y && enemies[i].x == x)
-                return true;
+        for (int i = 0; i < enemies.size(); i++) {
+            if (i == excludeEnemyIndex) continue;
+            if (enemies[i].alive && enemies[i].y == y && enemies[i].x == x) return true;
         }
         return false;
     }
 
-    void updateEnemyAI()
-    {
-        for (int i = 0; i < enemies.size(); i++)
-        {
-            if (!enemies[i].alive)
-                continue;
+    void updateEnemyAI() {
+        for (int i = 0; i < enemies.size(); i++) {
+            if (!enemies[i].alive) continue;
 
             const std::array<int, 4> dy = {-1, 1, 0, 0};
             const std::array<int, 4> dx = {0, 0, -1, 1};
@@ -377,107 +307,91 @@ public:
             int bestDist = INT_MAX;
             bool attacked = false;
 
-            for (size_t j = 0; j < dy.size(); j++)
-            {
+            for (size_t j = 0; j < dy.size(); j++) {
                 int ny = enemies[i].y + dy[j];
                 int nx = enemies[i].x + dx[j];
 
-                if (!enemyCanMove(enemies[i], ny, nx))
-                    continue;
+                if (!enemyCanMove(enemies[i], ny, nx)) continue;
 
-                if (isPlayerAt(ny, nx))
-                {
+                if (isPlayerAt(ny, nx)) {
                     attack(enemies[i], player);
                     attacked = true;
                     break;
                 }
 
-                if (isOccupied(ny, nx, i))
-                    continue;
+                if (isOccupied(ny, nx, i)) continue;
 
                 int dist = abs(player.y - ny) + abs(player.x - nx);
 
-                if (dist < bestDist)
-                {
+                if (dist < bestDist) {
                     bestDist = dist;
                     bestY = ny;
                     bestX = nx;
                 }
             }
 
-            if (attacked)
-                continue;
+            if (attacked) continue;
 
             enemies[i].y = bestY;
             enemies[i].x = bestX;
         }
     }
 
-    void handleInput()
-    {
+    void handleInput() {
         int key = getch();
         int nextY = player.y;
         int nextX = player.x;
 
-        switch (key)
-        {
-        case 'w':
-        case 'W':
-        case KEY_UP:
-            nextY--;
-            break;
-        case 's':
-        case 'S':
-        case KEY_DOWN:
-            nextY++;
-            break;
-        case 'a':
-        case 'A':
-        case KEY_LEFT:
-            nextX--;
-            break;
-        case 'd':
-        case 'D':
-        case KEY_RIGHT:
-            nextX++;
-            break;
-        case 'p':
-        case 'P':
-            saveMap();
-            savePlayer();
-            saveEnemies();
-            return;
-        case 'q':
-        case 'Q':
-            isRunning = false;
+        switch (key) {
+            case 'w':
+            case 'W':
+            case KEY_UP:
+                nextY--;
+                break;
+            case 's':
+            case 'S':
+            case KEY_DOWN:
+                nextY++;
+                break;
+            case 'a':
+            case 'A':
+            case KEY_LEFT:
+                nextX--;
+                break;
+            case 'd':
+            case 'D':
+            case KEY_RIGHT:
+                nextX++;
+                break;
+            case 'p':
+            case 'P':
+                saveMap();
+                savePlayer();
+                saveEnemies();
+                return;
+            case 'q':
+            case 'Q':
+                isRunning = false;
+                return;
+        }
+
+        if (nextY == player.y && nextX == player.x) {
             return;
         }
 
-        if (nextY == player.y && nextX == player.x)
-        {
-            return;
-        }
-
-        if (isInBounds(nextY, nextX) && map[nextY][nextX] != '#')
-        {
-            if (map[nextY][nextX] == '|')
-            {
+        if (isInBounds(nextY, nextX) && map[nextY][nextX] != '#') {
+            if (map[nextY][nextX] == '|') {
                 map[nextY][nextX] = '/';
-            }
-            else
-            {
+            } else {
                 bool hitEnemy = false;
-                for (int i = 0; i < enemies.size(); i++)
-                {
-                    if (enemies[i].alive && enemies[i].y == nextY && enemies[i].x == nextX)
-                    {
+                for (int i = 0; i < enemies.size(); i++) {
+                    if (enemies[i].alive && enemies[i].y == nextY && enemies[i].x == nextX) {
                         attack(player, enemies[i]);
                         hitEnemy = true;
                         break;
                     }
                 }
-                if (!hitEnemy)
-                {
+                if (!hitEnemy) {
                     player.x = nextX;
                     player.y = nextY;
                 }
@@ -486,8 +400,7 @@ public:
 
         updateEnemyAI();
 
-        if (!player.alive)
-        {
+        if (!player.alive) {
             clear();
             printw("You died!");
             std::remove("../player.txt");
@@ -497,18 +410,15 @@ public:
         }
     }
 
-    void run()
-    {
-        while (isRunning)
-        {
+    void run() {
+        while (isRunning) {
             draw();
             handleInput();
         }
     }
 };
 
-int main()
-{
+int main() {
     Game game;
     game.run();
 
