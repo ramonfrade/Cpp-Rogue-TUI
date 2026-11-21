@@ -79,7 +79,7 @@ public:
     ~Game() { endwin(); }
 
     void loadMap() {
-        std::ifstream file("../map.txt");
+        std::ifstream file("../data/map.txt");
 
         std::string line;
 
@@ -139,7 +139,7 @@ public:
         int maxHp = 0;
         int attack = 0;
         char glyph;
-        std::ifstream file("../creatures.txt");
+        std::ifstream file("../data/creatures.txt");
         if (file.is_open()) {
             while (file >> name >> maxHp >> attack >> glyph) {
                 example.name = name;
@@ -176,7 +176,7 @@ public:
     }
 
     void saveMap() {
-        std::ofstream file("../map.txt");
+        std::ofstream file("../data/map.txt");
 
         if (file.is_open()) {
             for (int i = 0; i < map.size(); i++) {
