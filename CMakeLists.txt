@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.16)
+project(CppRogueTUI LANGUAGES CXX)
+add_executable(rogue src/main.cpp)
+find_package(Curses REQUIRED)
+target_include_directories(rogue PRIVATE ${CURSES_INCLUDE_DIRS})
+target_link_libraries(rogue PRIVATE ${CURSES_LIBRARIES})
